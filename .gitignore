@@ -1,0 +1,81 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Diagnostic reports
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage
+coverage
+*.lcov
+
+# Node build output
+build
+.dist
+.cache
+.next
+out
+
+# Dependency directories
+node_modules/
+**/node_modules/
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Microbundle cache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# Parcel cache
+.cache
+.parcel-cache
+
+# TypeScript cache
+*.tsbuildinfo
+
+# dotenv environment variables
+.env
+.env.*
+!.env.example
+
+# VS Code
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs & temp
+*.tmp
+*.swp
+
+# Jupyter / data
+.ipynb_checkpoints
+__pycache__
+
+# Frontend artifacts
+*.map
+
+# Ignore dist in demo
+/drishti-demo/**/dist
+/drishti-demo/**/.cache
+/drishti-demo/**/coverage

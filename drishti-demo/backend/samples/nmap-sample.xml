@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Sample Nmap XML output (simplified for demo) -->
+<nmaprun scanner="nmap" args="nmap -sV demo" start="1234567890" version="7.92">
+  <host>
+    <status state="up" reason="syn-ack"/>
+    <address addr="127.0.0.1" addrtype="ipv4"/>
+    <ports>
+      <port protocol="tcp" portid="22">
+        <state state="open" reason="syn-ack" />
+        <service name="ssh" product="OpenSSH" version="8.2" extrainfo="Ubuntu 4ubuntu0.5"/>
+      </port>
+      <port protocol="tcp" portid="80">
+        <state state="open" reason="syn-ack" />
+        <service name="http" product="Apache" version="2.4.49" extrainfo="(Unix)"/>
+      </port>
+      <port protocol="tcp" portid="443">
+        <state state="closed" />
+      </port>
+    </ports>
+  </host>
+</nmaprun>
