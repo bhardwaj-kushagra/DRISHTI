@@ -1,78 +1,154 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DRISHTI Demo</title>
-  <style>
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 24px; background: #0b1020; color: #eaeefb; }
-    .card { background: #121832; border: 1px solid #1e2652; border-radius: 10px; padding: 16px; margin-bottom: 16px; box-shadow: 0 6px 20px rgba(0,0,0,0.25); }
-    .title { font-size: 1.25rem; margin-bottom: 8px; }
-    label { display:block; margin: 8px 0 4px; }
-    input { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #334; background:#0e1430; color:#eaeefb; }
-    button { margin-top:12px; padding:10px 14px; border:none; background:#4f46e5; color:white; border-radius:8px; cursor:pointer; }
-    button:disabled { background:#444a96; cursor:not-allowed; }
-    .status { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; color:#a3e635; }
-    .grid { display:grid; gap:12px; }
-    .finding { border-left: 4px solid #4f46e5; padding-left: 12px; }
-    .severity { text-transform: uppercase; font-size: 0.75rem; opacity: 0.8; }
-    .muted { color:#93a0d3; }
-    .small { font-size: 0.85rem; }
-    .row { display:flex; gap: 12px; }
-    .row > div { flex: 1; }
-    table { width:100%; border-collapse: collapse; }
-    th, td { text-align:left; padding:8px; border-bottom: 1px solid #243460; }
-    th { background: #0e1430; }
-  </style>
-</head>
-<body>
-  <h1>DRISHTI: Data-driven Reporting & Intelligence System</h1>
-
-  <div class="card">
-    <div class="title">Start a Simulated Scan</div>
-    <div class="row">
-      <div>
-        <label for="target">Target domain/IP (optional)</label>
-        <input id="target" placeholder="127.0.0.1" />
-      </div>
-      <div>
-        <label for="consent">Consent ID (required)</label>
-        <input id="consent" placeholder="CONSENT-123" />
-      </div>
-    </div>
-    <button id="startBtn">Start Scan</button>
-    <div id="status" class="status small" style="margin-top:12px;"></div>
-  </div>
-
-  <div class="card">
-    <div class="title">Findings</div>
-    <div id="findings"></div>
-  </div>
-
-  <script>
-    const API_BASE = 'http://localhost:3001';
-    const startBtn = document.getElementById('startBtn');
-    const statusEl = document.getElementById('status');
-    const findingsEl = document.getElementById('findings');
-    let pollTimer = null;
-
-    function setStatus(text) { statusEl.textContent = text; }
-
-    function renderFindings(findings) {
-      if (!Array.isArray(findings) || findings.length === 0) {
-        findingsEl.innerHTML = '<div class="muted">No findings.</div>';
-        return;
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DRISHTI Demo</title>
+    <style>
+      body {
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial,
+          sans-serif;
+        margin: 24px;
+        background: #0b1020;
+        color: #eaeefb;
       }
-      const rows = findings.map(f => `
+      .card {
+        background: #121832;
+        border: 1px solid #1e2652;
+        border-radius: 10px;
+        padding: 16px;
+        margin-bottom: 16px;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+      }
+      .title {
+        font-size: 1.25rem;
+        margin-bottom: 8px;
+      }
+      label {
+        display: block;
+        margin: 8px 0 4px;
+      }
+      input {
+        width: 100%;
+        padding: 8px;
+        border-radius: 6px;
+        border: 1px solid #334;
+        background: #0e1430;
+        color: #eaeefb;
+      }
+      button {
+        margin-top: 12px;
+        padding: 10px 14px;
+        border: none;
+        background: #4f46e5;
+        color: white;
+        border-radius: 8px;
+        cursor: pointer;
+      }
+      button:disabled {
+        background: #444a96;
+        cursor: not-allowed;
+      }
+      .status {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+          "Liberation Mono", "Courier New", monospace;
+        color: #a3e635;
+      }
+      .grid {
+        display: grid;
+        gap: 12px;
+      }
+      .finding {
+        border-left: 4px solid #4f46e5;
+        padding-left: 12px;
+      }
+      .severity {
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        opacity: 0.8;
+      }
+      .muted {
+        color: #93a0d3;
+      }
+      .small {
+        font-size: 0.85rem;
+      }
+      .row {
+        display: flex;
+        gap: 12px;
+      }
+      .row > div {
+        flex: 1;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 8px;
+        border-bottom: 1px solid #243460;
+      }
+      th {
+        background: #0e1430;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>DRISHTI: Data-driven Reporting & Intelligence System</h1>
+
+    <div class="card">
+      <div class="title">Start a Simulated Scan</div>
+      <div class="row">
+        <div>
+          <label for="target">Target domain/IP (optional)</label>
+          <input id="target" placeholder="127.0.0.1" />
+        </div>
+        <div>
+          <label for="consent">Consent ID (required)</label>
+          <input id="consent" placeholder="CONSENT-123" />
+        </div>
+      </div>
+      <button id="startBtn">Start Scan</button>
+      <div id="status" class="status small" style="margin-top: 12px"></div>
+    </div>
+
+    <div class="card">
+      <div class="title">Findings</div>
+      <div id="findings"></div>
+    </div>
+
+    <script>
+      const API_BASE = "http://localhost:3001";
+      const startBtn = document.getElementById("startBtn");
+      const statusEl = document.getElementById("status");
+      const findingsEl = document.getElementById("findings");
+      let pollTimer = null;
+
+      function setStatus(text) {
+        statusEl.textContent = text;
+      }
+
+      function renderFindings(findings) {
+        if (!Array.isArray(findings) || findings.length === 0) {
+          findingsEl.innerHTML = '<div class="muted">No findings.</div>';
+          return;
+        }
+        const rows = findings
+          .map(
+            (f) => `
         <tr>
-          <td>${f.severity ?? ''}</td>
-          <td>${f.title ?? ''}</td>
-          <td class="small muted">${f.description ?? ''}</td>
-          <td>${Array.isArray(f.cve_ids) ? f.cve_ids.join(', ') : ''}</td>
-          <td>${f.cvss_v3 ?? ''}</td>
+          <td>${f.severity ?? ""}</td>
+          <td>${f.title ?? ""}</td>
+          <td class="small muted">${f.description ?? ""}</td>
+          <td>${Array.isArray(f.cve_ids) ? f.cve_ids.join(", ") : ""}</td>
+          <td>${f.cvss_v3 ?? ""}</td>
         </tr>
-      `).join('');
-      findingsEl.innerHTML = `
+      `
+          )
+          .join("");
+        findingsEl.innerHTML = `
         <table>
           <thead>
             <tr>
@@ -88,66 +164,72 @@
           </tbody>
         </table>
       `;
-    }
-
-    async function startScan() {
-      findingsEl.innerHTML = '';
-      const target = document.getElementById('target').value.trim();
-      const consent = document.getElementById('consent').value.trim();
-      if (!consent) { alert('Consent ID is required before starting a scan.'); return; }
-
-      startBtn.disabled = true;
-      setStatus('Submitting scan...');
-      try {
-        const resp = await fetch(`${API_BASE}/api/scans`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ target, consent_id: consent })
-        });
-        const data = await resp.json();
-        if (!resp.ok) throw new Error(data?.error || 'Failed to start scan');
-        const jobId = data.job_id;
-        setStatus(`Job ${jobId} queued...`);
-        pollStatus(jobId);
-      } catch (e) {
-        console.error(e);
-        setStatus('Error: ' + e.message);
-        startBtn.disabled = false;
       }
-    }
 
-    async function pollStatus(jobId) {
-      clearInterval(pollTimer);
-      pollTimer = setInterval(async () => {
+      async function startScan() {
+        findingsEl.innerHTML = "";
+        const target = document.getElementById("target").value.trim();
+        const consent = document.getElementById("consent").value.trim();
+        if (!consent) {
+          alert("Consent ID is required before starting a scan.");
+          return;
+        }
+
+        startBtn.disabled = true;
+        setStatus("Submitting scan...");
         try {
-          const resp = await fetch(`${API_BASE}/api/scans/${jobId}/status`);
+          const resp = await fetch(`${API_BASE}/api/scans`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ target, consent_id: consent }),
+          });
           const data = await resp.json();
-          if (!resp.ok) throw new Error(data?.error || 'Status check failed');
-          setStatus(`Status: ${data.status}`);
-          if (data.status === 'completed') {
-            clearInterval(pollTimer);
-            await loadFindings(jobId);
-            startBtn.disabled = false;
-          }
+          if (!resp.ok) throw new Error(data?.error || "Failed to start scan");
+          const jobId = data.job_id;
+          setStatus(`Job ${jobId} queued...`);
+          pollStatus(jobId);
         } catch (e) {
           console.error(e);
-          setStatus('Error: ' + e.message);
-          clearInterval(pollTimer);
+          setStatus("Error: " + e.message);
           startBtn.disabled = false;
         }
-      }, 2000);
-    }
+      }
 
-    async function loadFindings(jobId) {
-      setStatus('Fetching findings...');
-      const resp = await fetch(`${API_BASE}/api/scans/${jobId}/findings`);
-      const data = await resp.json();
-      if (!resp.ok) { setStatus(data?.message || data?.error || 'Failed to fetch findings'); return; }
-      renderFindings(data.findings || []);
-      setStatus('Completed');
-    }
+      async function pollStatus(jobId) {
+        clearInterval(pollTimer);
+        pollTimer = setInterval(async () => {
+          try {
+            const resp = await fetch(`${API_BASE}/api/scans/${jobId}/status`);
+            const data = await resp.json();
+            if (!resp.ok) throw new Error(data?.error || "Status check failed");
+            setStatus(`Status: ${data.status}`);
+            if (data.status === "completed") {
+              clearInterval(pollTimer);
+              await loadFindings(jobId);
+              startBtn.disabled = false;
+            }
+          } catch (e) {
+            console.error(e);
+            setStatus("Error: " + e.message);
+            clearInterval(pollTimer);
+            startBtn.disabled = false;
+          }
+        }, 2000);
+      }
 
-    document.getElementById('startBtn').addEventListener('click', startScan);
-  </script>
-</body>
+      async function loadFindings(jobId) {
+        setStatus("Fetching findings...");
+        const resp = await fetch(`${API_BASE}/api/scans/${jobId}/findings`);
+        const data = await resp.json();
+        if (!resp.ok) {
+          setStatus(data?.message || data?.error || "Failed to fetch findings");
+          return;
+        }
+        renderFindings(data.findings || []);
+        setStatus("Completed");
+      }
+
+      document.getElementById("startBtn").addEventListener("click", startScan);
+    </script>
+  </body>
 </html>

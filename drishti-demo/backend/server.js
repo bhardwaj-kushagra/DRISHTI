@@ -122,7 +122,8 @@ function normalizeNucleiFindings(nucleiArray, scan_job_id, target) {
   }));
 }
 
-const PORT = process.env.PORT || 3001;
+// const PORT = process.env.PORT || 3001;
+const PORT = 3001;
 app.listen(PORT, () => {
   console.log(`DRISHTI demo backend running on http://localhost:${PORT}`);
 });
