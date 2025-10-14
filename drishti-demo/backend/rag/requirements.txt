@@ -7,3 +7,5 @@ requests
 nltk
 tqdm
 google-generativeai
+CORS
+flask-cors

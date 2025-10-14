@@ -28,12 +28,39 @@ from dotenv import load_dotenv
 load_dotenv()
 from typing import List, Dict, Tuple, Any
 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, make_response, Response
 import requests
 import numpy as np
 import nltk
+from flask import Flask, request, jsonify
+from flask_cors import CORS  # <--- import CORS
+
+# Initialize Flask app
+app = Flask(__name__)
+CORS(app, resources={r"/*": {"origins": "*"}})
+
+# CORS(app)  
 # nltk.download('punkt_tab')
 nltk.download('punkt')
+
+# Simple CORS support for browser requests (adds Access-Control-Allow-* headers
+# and handles preflight OPTIONS requests). We prefer using Flask-CORS but this
+# avoids an extra dependency.
+# @app.after_request
+# def _add_cors_headers(response: Response):
+ 
+#     return response
+
+
+@app.route('/query', methods=['OPTIONS'])
+def _query_options():
+    # Respond to preflight requests for /query
+    resp = make_response('', 204)
+    resp.headers['Access-Control-Allow-Origin'] = request.headers.get('Origin') or '*'
+    resp.headers['Access-Control-Allow-Methods'] = 'POST,OPTIONS'
+    resp.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization'
+    resp.headers['Access-Control-Allow-Credentials'] = 'true'
+    return resp
 
 try:
     import nltk
@@ -107,6 +134,8 @@ def load_documents(data_dir: Path) -> List[Dict[str, Any]]:
                 with p.open("r", encoding="utf-8") as fh:
                     data = json.load(fh)
                 text = extract_text_from_json(data)
+                doc_url = data.get("doc_url") or data.get("url") or ""
+                doc_cvss = data.get("doc_cvss") or data.get("cvss") or None
             else:
                 # treat as plain text or xml
                 with p.open("r", encoding="utf-8", errors="ignore") as fh:
@@ -118,7 +147,8 @@ def load_documents(data_dir: Path) -> List[Dict[str, Any]]:
         if not text or not text.strip():
             continue
 
-        docs.append({"id": str(p.name), "source": str(p), "text": text})
+        docs.append({"id": str(p.name), "source": str(p), "text": text, "doc_url": data.get("doc_url") or data.get("url") or "",
+        "doc_cvss": data.get("doc_cvss") or data.get("cvss"),})
     return docs
 
 
@@ -185,9 +215,12 @@ def build_corpus_chunks(docs: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     for doc in docs:
         doc_id = doc["id"]
         text = doc["text"]
+        doc_url = doc.get("doc_url") or doc.get("url") or ""
+        doc_cvss = doc.get("doc_cvss") or doc.get("cvss")
         cks = chunk_text(text)
         for i, c in enumerate(cks):
-            chunks.append({"id": f"{doc_id}__{i}", "doc_id": doc_id, "source": doc["source"], "text": c})
+            chunks.append({"id": f"{doc_id}__{i}", "doc_id": doc_id, "source": doc["source"], "text": c, "doc_url": doc_url,
+            "doc_cvss": doc_cvss,})
     return chunks
 
 
@@ -294,8 +327,10 @@ def local_summarize(top_chunks: List[Dict[str, Any]], max_chars: int = 600) -> s
     This concatenates the top chunk texts and returns the first max_chars characters.
     """
     if not top_chunks:
-        return ""
+        return "No relevant top chunk found."
     combined = "\n\n".join(tc.get("text", "") for tc in top_chunks)
+    if not combined:
+        return "No relevant context found."
     # simple trim to sentence boundary if possible
     s = combined.strip()
     if len(s) <= max_chars:
@@ -319,7 +354,7 @@ def safety_check(text: str, extra_patterns: List[str] | None = None) -> Tuple[bo
     return (len(matches) == 0, matches)
 
 
-app = Flask(__name__)
+# app = Flask(__name__)
 
 # load corpus at startup
 DOCS = load_documents(DATA_DIR) if DATA_DIR.exists() else []
@@ -339,8 +374,9 @@ def query():
         return jsonify({"error": "missing 'query' in JSON body"}), 400
 
     top_k = int(payload.get("top_k", 3))
-    use_gemini = bool(payload.get("use_gemini", True))
-
+    use_gemini = bool(payload.get("use_gemini", False))
+    print("Received query:", query_text)
+    print("Use Gemini:", use_gemini)
     # safety check on query
     ok_q, q_matches = safety_check(query_text)
     if not ok_q:
@@ -348,7 +384,8 @@ def query():
 
     top = retrieve_top_k(CHUNKS, query_text, k=top_k)
     top_chunks = [
-        {"id": c["id"], "source": c["source"], "text": c["text"], "score": score}
+        {"id": c["id"], "source": c["source"], "text": c["text"], "score": score,  "cvss": c.get("doc_cvss"), "url": 
+         c.get("doc_url"),}
         for c, score in top
     ]
 
@@ -380,7 +417,9 @@ def query():
             if not ok_ans:
                 # redact answer
                 answer = "[redacted due to safety policy]"
-
+    else:
+    # fallback for when Gemini is disabled
+        answer = local_summarize(top_chunks)
     resp = {
         "query": query_text,
         "top_chunks": top_chunks,
@@ -390,6 +429,7 @@ def query():
         "safety_query_matches": q_matches,
         "safety_answer_matches": safety_matches_after,
     }
+    print("Returning:", resp)
     return jsonify(resp)
 
 

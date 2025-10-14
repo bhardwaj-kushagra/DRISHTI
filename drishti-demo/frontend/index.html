@@ -119,6 +119,24 @@
       <div id="findings"></div>
     </div>
 
+<h2 style="color:#fff; margin-top:24px;">RAG Chatbot</h2>
+
+<textarea id="query" rows="3" cols="60" 
+  style="width:100%; padding:10px; border-radius:6px; border:1px solid #334; background:#0e1430; color:#eaeefb; font-family:monospace;"></textarea><br>
+
+<button onclick="askRag(document.getElementById('query').value)" 
+  style="margin-top:12px; padding:10px 16px; border:none; background:#4f46e5; color:#fff; border-radius:8px; cursor:pointer;">
+  Ask
+</button>
+
+<div id="answer" style="margin-top:16px; padding:12px; background:#121832; border-radius:8px; color:#a3e635; font-family:monospace;"></div>
+
+<div id="references" style="margin-top:12px; padding:10px; background:#1e233b; border-radius:8px; color:#93a0d3; font-family:monospace;"></div>
+
+<div id="top-chunks" style="margin-top:16px;"></div>
+
+ 
+
     <script>
       const API_BASE = "http://localhost:3001";
       const startBtn = document.getElementById("startBtn");
@@ -228,6 +246,100 @@
         renderFindings(data.findings || []);
         setStatus("Completed");
       }
+
+      function renderTopChunks(chunks) {
+  const container = document.getElementById('top-chunks');
+  if (!chunks || chunks.length === 0) {
+    container.innerHTML = "<p style='color:#93a0d3;'>No top chunks available.</p>";
+    return;
+  }
+
+  let html = `
+    <table style="width:100%; border-collapse:collapse; margin-top:12px; font-family:monospace;">
+      <thead>
+        <tr style="background:#0e1430; color:#fff;">
+          <th style="padding:8px; border:1px solid #243460;">ID</th>
+          <th style="padding:8px; border:1px solid #243460;">Score</th>
+          <th style="padding:8px; border:1px solid #243460;">Source</th>
+          <th style="padding:8px; border:1px solid #243460;">Text</th>
+          <th style="padding:8px; border:1px solid #243460;">URL</th>
+          <th style="padding:8px; border:1px solid #243460;">CVSS</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+
+  chunks.forEach(c => {
+    html += `
+      <tr style="background:#1e233b; color:#eaeefb;">
+        <td style="padding:6px; border:1px solid #243460;">${c.id}</td>
+        <td style="padding:6px; border:1px solid #243460;">${c.score.toFixed(3)}</td>
+        <td style="padding:6px; border:1px solid #243460;">${c.doc_source || c.source}</td>
+        <td style="padding:6px; border:1px solid #243460;">${c.text}</td>
+        <td style="padding:6px; border:1px solid #243460;"><a href="${c.url}" target="_blank" style="color:#4f46e5;">${c.url || c.doc_url}</a></td>
+        <td style="padding:6px; border:1px solid #243460;">${c.cvss || ''}</td>
+      </tr>
+    `;
+  });
+
+  html += `</tbody></table>`;
+  container.innerHTML = html;
+
+  // render references below answer
+  const refsContainer = document.getElementById('references');
+  let refsHtml = "<strong>References:</strong><br>";
+  chunks.forEach((c, idx) => {
+    refsHtml += `${idx+1}. <a href="${c.url}" target="_blank" style="color:#4f46e5;">[${c.id || c.id}] ${c.doc_title || c.url}</a><br>`;
+  });
+  refsContainer.innerHTML = refsHtml;
+}
+//       // function renderRagResults(results) {
+//   const container = document.getElementById('rag-results');
+//   if (!results || results.length === 0) {
+//     container.innerHTML = "<p style='color:#93a0d3;'>No results found.</p>";
+//     return;
+//   }
+
+//   const html = results.map(r => `
+//     <div style="
+//       background:#1e233b; 
+//       border-left:4px solid #4f46e5; 
+//       border-radius:8px; 
+//       padding:12px; 
+//       margin-bottom:12px;
+//       box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+//       transition: transform 0.2s;
+//     " 
+//     onmouseover="this.style.transform='scale(1.02)'" 
+//     onmouseout="this.style.transform='scale(1)'">
+//       <p style="margin:4px 0;"><strong>Text:</strong> ${r.text}</p>
+//       <p style="margin:4px 0;"><strong>Score:</strong> ${r.score.toFixed(3)}</p>
+//       <p style="margin:4px 0;"><strong>Reference:</strong> ${r.source}</p>
+//     </div>
+//   `).join("");
+
+//   container.innerHTML = html;
+// }
+      async function askRag(query) {
+  const res = await fetch("http://localhost:8000/query", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({ query, top_k: 3, use_gemini: false })
+  });
+  const data = await res.json();
+  console.log("Raw response:", data);
+  // document.getElementById("output").innerText = data.answer || "No response";
+  // // renderRagResults(data.top_chunks);
+
+   // Display answer with reference URL if available
+  let ansHtml = `<strong>Answer:</strong><br>`;
+  ansHtml += data.answer ? data.answer : "No response";
+  if (data.top_chunks && data.top_chunks[0]?.doc_url) {
+    ansHtml += `<br><small style="color:#93a0d3;">Source: <a href="${data.top_chunks[0].doc_url}" target="_blank" style="color:#4f46e5;">${data.top_chunks[0].doc_title || data.top_chunks[0].doc_url}</a></small>`;
+  }
+  document.getElementById("answer").innerHTML = ansHtml;
+  renderTopChunks(data.top_chunks);
+ }
 
       document.getElementById("startBtn").addEventListener("click", startScan);
     </script>
