@@ -135,7 +135,7 @@ def load_documents(data_dir: Path) -> List[Dict[str, Any]]:
                     data = json.load(fh)
                 text = extract_text_from_json(data)
                 doc_url = data.get("doc_url") or data.get("url") or ""
-                doc_cvss = data.get("doc_cvss") or data.get("cvss") or None
+                cvss = data.get("doc_cvss") or data.get("cvss") or None
             else:
                 # treat as plain text or xml
                 with p.open("r", encoding="utf-8", errors="ignore") as fh:
@@ -148,7 +148,7 @@ def load_documents(data_dir: Path) -> List[Dict[str, Any]]:
             continue
 
         docs.append({"id": str(p.name), "source": str(p), "text": text, "doc_url": data.get("doc_url") or data.get("url") or "",
-        "doc_cvss": data.get("doc_cvss") or data.get("cvss"),})
+        "cvss": data.get("cvss"),})
     return docs
 
 
@@ -216,11 +216,11 @@ def build_corpus_chunks(docs: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         doc_id = doc["id"]
         text = doc["text"]
         doc_url = doc.get("doc_url") or doc.get("url") or ""
-        doc_cvss = doc.get("doc_cvss") or doc.get("cvss")
+        cvss =  doc["cvss"]
         cks = chunk_text(text)
         for i, c in enumerate(cks):
             chunks.append({"id": f"{doc_id}__{i}", "doc_id": doc_id, "source": doc["source"], "text": c, "doc_url": doc_url,
-            "doc_cvss": doc_cvss,})
+            "cvss": cvss,})
     return chunks
 
 
@@ -358,7 +358,44 @@ def safety_check(text: str, extra_patterns: List[str] | None = None) -> Tuple[bo
 
 # load corpus at startup
 DOCS = load_documents(DATA_DIR) if DATA_DIR.exists() else []
-CHUNKS = build_corpus_chunks(DOCS) if DOCS else []
+
+
+def load_indexed_chunks(data_dir: Path) -> List[Dict[str, Any]]:
+    """Load precomputed chunk metadata (if present) and return as chunks list.
+
+    This file is useful when you already built an index (e.g. vulnerability_index_metadata.json)
+    that contains per-chunk doc_url, doc_cvss, doc_title, publishedDate, etc.
+    """
+    idx_file = data_dir / "vulnerability_index_metadata.json"
+    if not idx_file.exists():
+        return []
+    try:
+        with idx_file.open("r", encoding="utf-8") as fh:
+            arr = json.load(fh)
+        chunks = []
+        for item in arr:
+            chunks.append({
+                "id": item.get("id"),
+                "doc_id": item.get("doc_id"),
+                "source": item.get("doc_source") or str(idx_file),
+                "text": item.get("text", ""),
+                "doc_url": item.get("doc_url") or item.get("url") or "",
+                "doc_cvss": item.get("doc_cvss") or item.get("doc_cvss") or None,
+                "doc_title": item.get("doc_title") or None,
+                "publishedDate": item.get("publishedDate") or None,
+                "doc_source": item.get("doc_source") or None,
+            })
+        return chunks
+    except Exception as e:
+        print(f"Failed to load index file {idx_file}: {e}")
+        return []
+
+
+PRECOMPUTED_CHUNKS = load_indexed_chunks(DATA_DIR) if DATA_DIR.exists() else []
+if PRECOMPUTED_CHUNKS:
+    CHUNKS = PRECOMPUTED_CHUNKS
+else:
+    CHUNKS = build_corpus_chunks(DOCS) if DOCS else []
 
 
 @app.route("/health", methods=["GET"])
@@ -383,11 +420,25 @@ def query():
         return jsonify({"error": "query blocked by safety filter", "matches": q_matches}), 400
 
     top = retrieve_top_k(CHUNKS, query_text, k=top_k)
+    # top_chunks = [
+    #     {"id": c["id"], "source": c["source"], "text": c["text"], "score": score,  "cvss": c["cvss"], "url": 
+    #      c.get("doc_url"),}
+    #     for c, score in top
+    # ]
     top_chunks = [
-        {"id": c["id"], "source": c["source"], "text": c["text"], "score": score,  "cvss": c.get("doc_cvss"), "url": 
-         c.get("doc_url"),}
-        for c, score in top
-    ]
+    {
+        "id": c.get("id"),
+        "source": c.get("source"),
+        "text": c.get("text"),
+        "score": score,
+        "cvss": c.get("cvss") or c.get("doc_cvss"),
+        "url": c.get("url") or c.get("doc_url"),
+        "title": c.get("title") or c.get("doc_title"),
+        "publishedDate": c.get("publishedDate")
+    }
+    for c, score in top                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 
+]
+
 
     answer = None
     gemini_ok = False

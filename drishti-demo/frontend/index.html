@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<!-- <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -276,8 +276,8 @@
         <td style="padding:6px; border:1px solid #243460;">${c.score.toFixed(3)}</td>
         <td style="padding:6px; border:1px solid #243460;">${c.doc_source || c.source}</td>
         <td style="padding:6px; border:1px solid #243460;">${c.text}</td>
-        <td style="padding:6px; border:1px solid #243460;"><a href="${c.url}" target="_blank" style="color:#4f46e5;">${c.url || c.doc_url}</a></td>
-        <td style="padding:6px; border:1px solid #243460;">${c.cvss || ''}</td>
+        <td style="padding:6px; border:1px solid #243460;"><a href="${c.url || c.doc_url}" target="_blank" style="color:#4f46e5;">${c.url || c.doc_url}</a></td>
+        <td style="padding:6px; border:1px solid #243460;">${c.cvss}</td>
       </tr>
     `;
   });
@@ -285,11 +285,23 @@
   html += `</tbody></table>`;
   container.innerHTML = html;
 
-  // render references below answer
+  // // render references below answer
+  // const refsContainer = document.getElementById('references');
+  // let refsHtml = "<strong>References:</strong><br>";
+  // chunks.forEach((c, idx) => {
+  //   refsHtml += `${idx+1}. <a href="${c.url}" target="_blank" style="color:#4f46e5;">[${c.id || c.id}] ${c.doc_title || c.url}</a><br>`;
+  // });
+  // refsContainer.innerHTML = refsHtml;
+   // render references safely
   const refsContainer = document.getElementById('references');
   let refsHtml = "<strong>References:</strong><br>";
   chunks.forEach((c, idx) => {
-    refsHtml += `${idx+1}. <a href="${c.url}" target="_blank" style="color:#4f46e5;">[${c.id || c.id}] ${c.doc_title || c.url}</a><br>`;
+    const safeUrl = c.url || c.doc_url;
+    if (safeUrl) {
+      refsHtml += `${idx + 1}. <a href="${safeUrl}" target="_blank" style="color:#4f46e5;">${c.doc_title || safeUrl}</a><br>`;
+    } else {
+      refsHtml += `${idx + 1}. (no URL)<br>`;
+    }
   });
   refsContainer.innerHTML = refsHtml;
 }
@@ -343,5 +355,467 @@
 
       document.getElementById("startBtn").addEventListener("click", startScan);
     </script>
+  </body>
+</html> -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DRISHTI Demo</title>
+    <style>
+      /* Smooth animated gradient background */
+      body {
+        font-family: "Segoe UI", Roboto, Arial, sans-serif;
+        margin: 0;
+        padding: 40px;
+        background: radial-gradient(circle at top left, #0b1020, #060818, #000);
+        background-size: 300% 300%;
+        animation: gradientShift 12s ease infinite;
+        color: #eaeefb;
+      }
+
+      @keyframes gradientShift {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+      }
+
+      h1 {
+        text-align: center;
+        font-size: 2rem;
+        color: #e2e8f0;
+        letter-spacing: 0.5px;
+        margin-bottom: 24px;
+        text-shadow: 0 0 12px rgba(79, 70, 229, 0.6);
+      }
+
+      .card {
+        background: rgba(18, 24, 50, 0.55);
+        border: 1px solid rgba(79, 70, 229, 0.2);
+        border-radius: 16px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+        backdrop-filter: blur(10px);
+        transition: transform 0.3s, box-shadow 0.3s;
+      }
+
+      .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 36px rgba(79, 70, 229, 0.3);
+      }
+
+      .title {
+        font-size: 1.3rem;
+        margin-bottom: 10px;
+        color: #a5b4fc;
+      }
+
+      label {
+        display: block;
+        margin: 8px 0 4px;
+        color: #cbd5e1;
+      }
+
+      input {
+        width: 100%;
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        background: rgba(14, 20, 48, 0.7);
+        color: #eaeefb;
+        outline: none;
+        transition: 0.3s;
+      }
+
+      input:focus {
+        border-color: #4f46e5;
+        box-shadow: 0 0 8px rgba(79, 70, 229, 0.5);
+      }
+
+      button {
+        margin-top: 12px;
+        padding: 10px 16px;
+        border: none;
+        background: linear-gradient(135deg, #4f46e5, #6366f1);
+        color: white;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-weight: 500;
+      }
+
+      button:hover:not(:disabled) {
+        background: linear-gradient(135deg, #5b4ef5, #7c81ff);
+        box-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
+        transform: translateY(-1px);
+      }
+
+      button:disabled {
+        background: #444a96;
+        cursor: not-allowed;
+        opacity: 0.7;
+      }
+
+      .status {
+        font-family: monospace;
+        color: #a3e635;
+      }
+
+      .grid {
+        display: grid;
+        gap: 12px;
+      }
+
+      .row {
+        display: flex;
+        gap: 12px;
+      }
+
+      .row > div {
+        flex: 1;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      }
+
+      th,
+      td {
+        text-align: left;
+        padding: 10px;
+        border-bottom: 1px solid rgba(79, 70, 229, 0.3);
+      }
+
+      th {
+        background: rgba(14, 20, 48, 0.9);
+        color: #a5b4fc;
+      }
+
+      tr:nth-child(even) {
+        background: rgba(30, 35, 60, 0.6);
+      }
+
+      tr:hover {
+        background: rgba(79, 70, 229, 0.15);
+      }
+
+      .muted {
+        color: #93a0d3;
+      }
+
+      #answer {
+        background: rgba(18, 24, 50, 0.6);
+        border-left: 4px solid #4f46e5;
+        padding: 16px;
+        border-radius: 10px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        transition: 0.3s;
+      }
+
+      #answer:hover {
+        box-shadow: 0 6px 20px rgba(79, 70, 229, 0.3);
+      }
+
+      textarea {
+        border-radius: 10px;
+        backdrop-filter: blur(6px);
+      }
+
+      #references {
+        background: rgba(30, 35, 60, 0.4);
+        border-left: 3px solid #4f46e5;
+        padding: 10px;
+        border-radius: 8px;
+      }
+
+      a {
+        text-decoration: none;
+        color: #6366f1;
+      }
+
+      a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h1>DRISHTI: Data-driven Reporting & Intelligence System</h1>
+
+    <div class="card">
+      <div class="title">Start a Simulated Scan</div>
+      <div class="row">
+        <div>
+          <label for="target">Target domain/IP (optional)</label>
+          <input id="target" placeholder="127.0.0.1" />
+        </div>
+        <div>
+          <label for="consent">Consent ID (required)</label>
+          <input id="consent" placeholder="CONSENT-123" />
+        </div>
+      </div>
+      <button id="startBtn">Start Scan</button>
+      <div id="status" class="status small" style="margin-top: 12px"></div>
+    </div>
+
+    <div class="card">
+      <div class="title">Findings</div>
+      <div id="findings"></div>
+    </div>
+
+    <h2 style="color:#fff; margin-top:24px; text-shadow:0 0 8px rgba(79,70,229,0.6);">RAG Chatbot</h2>
+
+    <textarea id="query" rows="3" cols="60"
+      style="width:100%; padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.1); background:rgba(14,20,48,0.7); color:#eaeefb; font-family:monospace;">
+    </textarea><br>
+
+    <button onclick="askRag(document.getElementById('query').value)"
+      style="margin-top:12px; padding:10px 16px; border:none; background:linear-gradient(135deg,#4f46e5,#6366f1); color:#fff; border-radius:8px; cursor:pointer;">
+      Ask
+    </button>
+
+    <div id="answer" style="margin-top:16px;"></div>
+    <div id="references" style="margin-top:12px;"></div>
+    <div id="top-chunks" style="margin-top:16px;"></div>
+
+    <!-- Your original JS (unchanged for full functionality) -->
+   <script>
+  const API_BASE = "http://localhost:3001";
+  const startBtn = document.getElementById("startBtn");
+  const statusEl = document.getElementById("status");
+  const findingsEl = document.getElementById("findings");
+  let pollTimer = null;
+
+  function setStatus(text) {
+    statusEl.textContent = text;
+  }
+
+  function renderFindings(findings) {
+    if (!Array.isArray(findings) || findings.length === 0) {
+      findingsEl.innerHTML = '<div class="muted">No findings.</div>';
+      return;
+    }
+
+    const rows = findings
+      .map((f) => {
+        let sevColor =
+          f.severity?.toLowerCase().includes("high")
+            ? "#ef4444"
+            : f.severity?.toLowerCase().includes("medium")
+            ? "#f59e0b"
+            : f.severity?.toLowerCase().includes("low")
+            ? "#10b981"
+            : "#60a5fa";
+        return `
+          <tr style="transition:all 0.2s ease; backdrop-filter:blur(8px);">
+            <td style="color:${sevColor}; font-weight:600;">${f.severity ?? ""}</td>
+            <td>${f.title ?? ""}</td>
+            <td class="small muted">${f.description ?? ""}</td>
+            <td>${Array.isArray(f.cve_ids) ? f.cve_ids.join(", ") : ""}</td>
+            <td>${f.cvss_v3 ?? ""}</td>
+          </tr>
+        `;
+      })
+      .join("");
+
+    findingsEl.innerHTML = `
+      <div style="overflow-x:auto; border-radius:10px;">
+        <table style="
+          width:100%;
+          border-collapse:collapse;
+          background:rgba(255,255,255,0.05);
+          border:1px solid rgba(255,255,255,0.1);
+          backdrop-filter:blur(12px);
+          border-radius:10px;
+          overflow:hidden;
+          box-shadow:0 8px 24px rgba(0,0,0,0.2);
+        ">
+          <thead style="background:linear-gradient(90deg,#1e3a8a,#4338ca); color:#fff;">
+            <tr>
+              <th style="padding:10px;">Severity</th>
+              <th style="padding:10px;">Title</th>
+              <th style="padding:10px;">Description</th>
+              <th style="padding:10px;">CVE IDs</th>
+              <th style="padding:10px;">CVSS</th>
+            </tr>
+          </thead>
+          <tbody style="color:#eaeefb;">
+            ${rows}
+          </tbody>
+        </table>
+      </div>
+      <style>
+        table tbody tr:hover {
+          background: rgba(79,70,229,0.2);
+          transform: scale(1.01);
+        }
+        th, td {
+          text-align:left;
+          padding:12px;
+          border-bottom:1px solid rgba(255,255,255,0.08);
+        }
+      </style>
+    `;
+  }
+
+  async function startScan() {
+    findingsEl.innerHTML = "";
+    const target = document.getElementById("target").value.trim();
+    const consent = document.getElementById("consent").value.trim();
+    if (!consent) {
+      alert("Consent ID is required before starting a scan.");
+      return;
+    }
+
+    startBtn.disabled = true;
+    setStatus("Submitting scan...");
+    try {
+      const resp = await fetch(`${API_BASE}/api/scans`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ target, consent_id: consent }),
+      });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data?.error || "Failed to start scan");
+      const jobId = data.job_id;
+      setStatus(`Job ${jobId} queued...`);
+      pollStatus(jobId);
+    } catch (e) {
+      console.error(e);
+      setStatus("Error: " + e.message);
+      startBtn.disabled = false;
+    }
+  }
+
+  async function pollStatus(jobId) {
+    clearInterval(pollTimer);
+    pollTimer = setInterval(async () => {
+      try {
+        const resp = await fetch(`${API_BASE}/api/scans/${jobId}/status`);
+        const data = await resp.json();
+        if (!resp.ok) throw new Error(data?.error || "Status check failed");
+        setStatus(`Status: ${data.status}`);
+        if (data.status === "completed") {
+          clearInterval(pollTimer);
+          await loadFindings(jobId);
+          startBtn.disabled = false;
+        }
+      } catch (e) {
+        console.error(e);
+        setStatus("Error: " + e.message);
+        clearInterval(pollTimer);
+        startBtn.disabled = false;
+      }
+    }, 2000);
+  }
+
+  async function loadFindings(jobId) {
+    setStatus("Fetching findings...");
+    const resp = await fetch(`${API_BASE}/api/scans/${jobId}/findings`);
+    const data = await resp.json();
+    if (!resp.ok) {
+      setStatus(data?.message || data?.error || "Failed to fetch findings");
+      return;
+    }
+    renderFindings(data.findings || []);
+    setStatus("Completed");
+  }
+
+  function renderTopChunks(chunks) {
+    const container = document.getElementById("top-chunks");
+    if (!chunks || chunks.length === 0) {
+      container.innerHTML = "<p style='color:#93a0d3;'>No top chunks available.</p>";
+      return;
+    }
+
+    let html = `
+      <div style="overflow-x:auto; border-radius:10px;">
+        <table style="
+          width:100%;
+          border-collapse:collapse;
+          background:rgba(255,255,255,0.04);
+          border:1px solid rgba(255,255,255,0.1);
+          backdrop-filter:blur(10px);
+          border-radius:10px;
+          box-shadow:0 6px 20px rgba(0,0,0,0.25);
+        ">
+          <thead style="background:linear-gradient(90deg,#3730a3,#6366f1); color:#fff;">
+            <tr>
+              <th style="padding:10px;">ID</th>
+              <th style="padding:10px;">Score</th>
+              <th style="padding:10px;">Source</th>
+              <th style="padding:10px;">Text</th>
+              <th style="padding:10px;">URL</th>
+              <th style="padding:10px;">CVSS</th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
+
+    chunks.forEach((c) => {
+      html += `
+        <tr style="background:rgba(30,35,60,0.6); color:#eaeefb; transition:all 0.2s;">
+          <td style="padding:8px;">${c.id}</td>
+          <td style="padding:8px;">${c.score?.toFixed(3) || ""}</td>
+          <td style="padding:8px;">${c.doc_source || c.source}</td>
+          <td style="padding:8px;">${c.text}</td>
+          <td style="padding:8px;"><a href="${c.url || c.doc_url}" target="_blank" style="color:#60a5fa;">${c.url || c.doc_url || "(none)"}</a></td>
+          <td style="padding:8px;">${c.cvss ?? ""}</td>
+        </tr>
+      `;
+    });
+
+    html += `
+          </tbody>
+        </table>
+      </div>
+      <style>
+        table tbody tr:hover {
+          background:rgba(99,102,241,0.2);
+          transform:translateY(-2px);
+        }
+      </style>
+    `;
+
+    container.innerHTML = html;
+
+    const refsContainer = document.getElementById("references");
+    let refsHtml = "<strong>References:</strong><br>";
+    chunks.forEach((c, idx) => {
+      const safeUrl = c.url || c.doc_url;
+      refsHtml += safeUrl
+        ? `${idx + 1}. <a href="${safeUrl}" target="_blank" style="color:#60a5fa;">${c.doc_title || safeUrl}</a><br>`
+        : `${idx + 1}. (no URL)<br>`;
+    });
+    refsContainer.innerHTML = refsHtml;
+  }
+
+  async function askRag(query) {
+    const res = await fetch("http://localhost:8000/query", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query, top_k: 3, use_gemini: false }),
+    });
+    const data = await res.json();
+    console.log("Raw response:", data);
+
+    let ansHtml = `<strong>Answer:</strong><br>`;
+    ansHtml += data.answer ? data.answer : "No response";
+    if (data.top_chunks && data.top_chunks[0]?.doc_url) {
+      ansHtml += `<br><small style="color:#93a0d3;">Source: <a href="${data.top_chunks[0].doc_url}" target="_blank" style="color:#4f46e5;">${data.top_chunks[0].doc_title || data.top_chunks[0].doc_url}</a></small>`;
+    }
+    document.getElementById("answer").innerHTML = ansHtml;
+    renderTopChunks(data.top_chunks);
+  }
+
+  document.getElementById("startBtn").addEventListener("click", startScan);
+</script>
+
   </body>
 </html>
