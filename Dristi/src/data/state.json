@@ -1,0 +1,45 @@
+{
+  "targets": [
+    { "id": "t1", "host": "shop.example.com", "tags": ["prod", "web"], "owner": "web-team" }
+  ],
+  "scans": [
+    {
+      "id": "s1",
+      "targetId": "t1",
+      "tools": ["nmap", "nessus", "nuclei"],
+      "startedAt": "2025-10-12T10:00:00Z",
+      "status": "done",
+      "steps": [
+        { "tool": "nmap", "t": "10:00", "msg": "Discovered ports 22,80,443", "level": "info" },
+        { "tool": "nessus", "t": "10:05", "msg": "CVE-2021-41773 detected", "level": "high" },
+        { "tool": "nuclei", "t": "10:07", "msg": "WordPress outdated core", "level": "med" }
+      ]
+    },
+    {
+      "id": "s0",
+      "targetId": "t1",
+      "tools": ["nmap", "nessus"],
+      "startedAt": "2025-10-10T09:00:00Z",
+      "status": "done",
+      "steps": [
+        { "tool": "nmap", "t": "09:00", "msg": "Open 22,80", "level": "info" },
+        { "tool": "nessus", "t": "09:04", "msg": "No critical CVEs", "level": "low" }
+      ]
+    }
+  ],
+  "findings": [
+    { "id": "f1", "scanId": "s1", "tool": "Nmap", "asset": "shop.example.com", "component": "sshd", "cve": null, "cvss": null, "severity": "Medium", "evidence": "Port 22 open, OpenSSH 7.6p1", "exploited": false, "references": [] },
+    { "id": "f2", "scanId": "s1", "tool": "Nessus", "asset": "shop.example.com", "component": "apache2", "cve": "CVE-2021-41773", "cvss": 7.5, "severity": "High", "evidence": "Path traversal in Apache 2.4.49", "exploited": true, "references": ["NVD", "ExploitDB"] },
+    { "id": "f3", "scanId": "s1", "tool": "Nuclei", "asset": "shop.example.com", "component": "wordpress", "cve": "CVE-2020-28036", "cvss": 6.1, "severity": "Medium", "evidence": "Outdated WP core + vulnerable plugin", "exploited": false, "references": ["CVE", "Rapid7"] }
+  ],
+  "chains": [
+    { "id": "c1", "name": "Initial foothold → Data exfil", "nodes": [{ "findingId": "f2" }, { "findingId": "f3" }], "edges": [["f2", "f3"]] }
+  ],
+  "intel": {
+    "exploitedCves": ["CVE-2021-41773"],
+    "trending": ["CVE-2021-41773", "CVE-2020-28036"]
+  },
+  "comments": [
+    { "id": "cm1", "findingId": "f2", "author": "Analyst_01", "text": "Prioritize patch; exploited in wild.", "ts": "2025-10-12T10:15:00Z" }
+  ]
+}

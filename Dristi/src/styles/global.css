@@ -1,0 +1,126 @@
+@import "tailwindcss";
+
+/* Base */
+body {
+  background: linear-gradient(135deg, #0f172a, #1e293b, #0f172a);
+  color: #e2e8f0;
+  font-family: 'Inter', sans-serif;
+}
+
+/* Unified container and grid (2 columns) */
+.container-app {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+.grid-shell {
+  display: grid;
+  grid-template-columns: 280px 1fr; /* left rail + center */
+  gap: 16px;
+  align-items: start;
+}
+
+/* Left rail */
+.rail-sticky {
+  position: sticky;
+  top: 0;
+  max-height: calc(100vh - 48px);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow: auto;
+  padding-right: 2px;
+}
+
+/* Card system */
+.glass-card {
+  @apply bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl shadow-lg;
+  padding: 20px;
+}
+.card-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #a5b4fc;
+  margin-bottom: 8px;
+  letter-spacing: .2px;
+}
+
+/* Buttons */
+.btn-primary {
+  @apply bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2 rounded-lg transition-all duration-200;
+}
+.btn-secondary {
+  @apply border border-slate-400/40 text-slate-200 py-2 rounded-lg hover:bg-slate-700 transition-all;
+}
+
+/* Inputs */
+.input-box {
+  @apply w-full bg-slate-800/50 border border-slate-600 text-slate-100 rounded-lg px-3 py-2 outline-none focus:border-indigo-400 transition-all;
+}
+
+/* Tables and code blocks */
+.table { width: 100%; border-collapse: collapse; }
+.table-header { @apply text-slate-300 uppercase text-xs font-semibold tracking-wider border-b border-slate-600; }
+.table th, .table td { padding: 10px 12px; }
+.table-row { @apply border-b border-slate-700 hover:bg-slate-800/60 transition-all; }
+.truncate { max-width: 280px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.codeblock {
+  background: rgba(2, 6, 23, 0.7);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 12px;
+  color: #cbd5e1;
+  overflow-x: auto;
+}
+
+/* Severity tokens */
+.sev-high { color: #fca5a5; }
+.sev-med  { color: #fbbf24; }
+.sev-low  { color: #86efac; }
+.badge { font-size: 10px; padding: 2px 8px; border-radius: 9999px; background: rgba(148,163,184,.12); color: #e2e8f0; }
+
+/* Preset chips wrap */
+.preset-row { display: flex; flex-wrap: wrap; gap: 8px; min-width: 0; }
+.preset-chip { white-space: nowrap; }
+
+/* Assistant button + fullscreen modal (header-triggered) */
+.assist-btn {
+  @apply bg-indigo-600 text-white rounded-md;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid rgba(255,255,255,.15);
+}
+.assist-btn:hover { background: #5457e5; }
+.assist-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  background: rgba(2,6,23,0.75);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.assist-card {
+  width: min(1080px, 94vw);
+  height: min(720px, 90vh);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+/* Smooth scrolling + custom scrollbar */
+.scroll-smooth { scroll-behavior: smooth; }
+.custom-scrollbar::-webkit-scrollbar { width: 6px; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background-color: rgba(99,102,241,0.4); border-radius: 4px; }
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { background-color: rgba(99,102,241,0.7); }
+
+/* Responsive */
+@media (max-width: 1280px) {
+  .grid-shell { grid-template-columns: 1fr; }
+  .rail-sticky { position: static; max-height: none; overflow: visible; padding-right: 0; }
+  .container-app { padding: 0 16px; }
+}
