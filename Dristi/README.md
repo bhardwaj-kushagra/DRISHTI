@@ -1,16 +1,93 @@
-# React + Vite
+# Drishti
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This file contains a short project overview, a readable ASCII/Markdown directory tree, a file summary (sizes & last-modified times) and a short CONTRIBUTING/usage section.
 
-Currently, two official plugins are available:
+## Quick start (Windows PowerShell)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+1. Install dependencies:
 
-## React Compiler
+```powershell
+cd "d:\Machine Learning\Drishtie\Drishti\Dristi"
+npm install
+```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+2. Start development server:
 
-## Expanding the ESLint configuration
+```powershell
+npm run dev
+```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+3. Open the app in your browser (Vite will show the URL, usually http://localhost:5173).
+
+---
+
+## Directory tree 
+
+```
+Dristi/
+├─ .gitignore                  # Git ignore rules
+├─ eslint.config.js            # ESLint config
+├─ index.html                  # Vite HTML entry
+├─ package.json                # npm scripts & deps
+├─ package-lock.json           # lockfile for reproducible installs
+├─ README.md                   # (this file)
+├─ vite.config.js              # Vite config
+├─ public/
+│  └─ vite.svg                 # public asset
+└─ src/
+	├─ .env                     # environment variables
+	├─ App.jsx                  # root React component
+	├─ App.css
+	├─ Chatbot.jsx
+	├─ index.js
+	├─ main.jsx
+	├─ index.css
+	├─ assets/
+	│  └─ react.svg
+	├─ components/
+	│  ├─ AttackPathGraph.jsx
+	│  ├─ Chatbot.jsx
+	│  ├─ CommentsPanel.jsx
+	│  ├─ DiffView.jsx
+	│  ├─ FindingDrawer.jsx
+	│  ├─ Footer.jsx
+	│  ├─ Header.jsx
+	│  ├─ Heatmap.jsx
+	│  ├─ ModelPanel.jsx
+	│  ├─ ReportComposer.jsx
+	│  ├─ ResultsTable.jsx
+	│  ├─ ScanControls.jsx
+	│  └─ TimelineSelector.jsx
+	├─ context/
+	│  └─ AppContext.jsx
+	├─ data/
+	│  ├─ dummyData.json
+	│  ├─ mockResults.js
+	│  └─ state.json
+	├─ hooks/
+	│  ├─ useChatbot.js
+	│  └─ useScanner.js
+	├─ lib/
+	│  ├─ graphPlanner.js
+	│  ├─ mockApi.js
+	│  ├─ riskRetrieval.js
+	│  └─ verifier.js
+	├─ pages/
+	│  └─ Dashboard.jsx
+	├─ styles/
+	│  └─ global.css
+	└─ utils/
+		└─ api.js
+```
+
+ 
+
+## CONTRIBUTING & usage notes
+
+- To run the app locally: install dependencies and run `npm run dev`.
+- Linting: `npm run lint` (requires node_modules installed).
+- Build for production: `npm run build` then `npm run preview` to serve the build locally.
+
+If you want to connect a real backend instead of the mock, replace `src/lib/mockApi.js` and update `src/utils/api.js` accordingly. Consider adding unit tests and switching to TypeScript for better maintainability.
+
+
